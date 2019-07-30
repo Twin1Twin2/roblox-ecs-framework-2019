@@ -4,6 +4,7 @@
 local ECSComponent = require(script.Parent.ECSComponent)
 
 local IsType = require(script.Parent.IsType)
+local IsComponent = IsType.Component
 
 local Table = require(script.Parent.Table)
 local TableCopy = Table.Copy
@@ -65,10 +66,29 @@ function ECSComponentDescription:Build(data)
 end
 
 
+--- Gets the data of the given component
+-- @tparam ECSComponent
+-- @treturn table
+function ECSComponentDescription:GetComponentData(component)
+    assert(IsComponent(component), "Arg [1] is not a ECSComponent")
+
+    local data = {}
+
+    for _, fieldName in pairs(self.Fields) do
+        data[fieldName] = component[fieldName]
+    end
+
+    return data
+end
+
+
 --- Fills out the data of the given component
---
+-- @tparam ECSComponent
+-- @tparam table
 function ECSComponentDescription:SetComponentData(component, data)
-    -- fills out the component with data from data (if it has it)
+    assert(IsComponent(component), "Arg [1] is not a ECSComponent")
+    assert(type(data) == "table", "Arg [2] is not a Table!")
+
     for _, fieldName in pairs(self.Fields) do
         local newData = data[fieldName]
 
