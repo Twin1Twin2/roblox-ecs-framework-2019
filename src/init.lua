@@ -19,8 +19,8 @@ ECSFramework.SystemUpdaterBuilder = require(script.SystemUpdaterBuilder)
 
 ECSFramework.World = require(script.ECSWorld)
 
-ECSFramework.Engine = require(script.ECSEngine)
-ECSFramework.EngineConfiguration = require(script.EngineConfiguration)
+ECSFramework.Server = require(script.ServerClient.Server)
+ECSFramework.Client = require(script.ServerClient.Client)
 
 
 return ECSFramework

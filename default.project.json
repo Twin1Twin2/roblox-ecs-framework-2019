@@ -1,0 +1,39 @@
+{
+    "name": "Roblox-ECS-Framework",
+
+    "tree": {
+        "$className": "DataModel",
+
+        "ReplicatedStorage": {
+            "$className": "ReplicatedStorage",
+            
+            "ECSFramework": {
+                "$path": "src"
+            },
+
+            "ECSExampleResources": {
+                "$path": "examples/Shared"
+            }
+        },
+
+        "ServerScriptService": {
+            "$className": "ServerScriptService",
+
+            "ECSServerMain": {
+                "$path": "examples/Server"
+            }
+        },
+
+        "StarterPlayer": {
+            "$className": "StarterPlayer",
+
+            "StarterPlayerScripts": {
+                "$className": "StarterPlayerScripts",
+
+                "ECSClientMain": {
+                    "$path": "examples/Client"
+                }
+            }
+        }
+    }
+}

@@ -20,7 +20,7 @@ ECSWorld.IsType = IsType.World
 
 function ECSWorld.new(name)
     name = name or "ECS_WORLD"
-    assert(type(name) == "string", "Name is not a string!")
+    assert(type(name) == "string", "Arg [1] is not a string!")
 
     local self = setmetatable({}, ECSWorld)
 
@@ -44,7 +44,7 @@ end
 
 --- Adds an Entity to this World
 -- @tparam ECSEntity entity
--- @treturn ECSWorld
+-- @treturn self
 function ECSWorld:AddEntity(entity)
     self.EntityManager:Add(entity)
 
@@ -54,7 +54,7 @@ end
 
 --- Removes an Entity from this World. Entity is NOT destroyed
 -- @tparam ECSEntity entity
--- @treturn ECSWorld
+-- @treturn self
 function ECSWorld:RemoveEntity(entity)
     self.EntityManager:Remove(entity)
 
@@ -63,7 +63,8 @@ end
 
 
 --- Adds a System to this World
---
+-- @tparam ECSSystem system
+-- @treturn self
 function ECSWorld:AddSystem(system)
     self.SystemManager:Add(system)
 
@@ -72,7 +73,8 @@ end
 
 
 --- Removes a System from this World
---
+-- @tparam ECSSystem system
+-- @treturn self
 function ECSWorld:RemoveSystem(system)
     self.SystemManager:Remove(system)
 

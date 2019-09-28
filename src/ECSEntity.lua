@@ -33,8 +33,9 @@ function ECSEntity.new(instance)
 
     self.Components = {}
 
-    self.ComponentsAddedCallback = function() end   -- set when added to a EntityManager
-    self.ComponentsRemovedCallback = function() end -- set when added to a EntityManager
+    self.ComponentsAddedCallback = function() end   -- set when added to an EntityManager
+    self.ComponentsRemovedCallback = function() end -- set when added to an EntityManager
+    self.ComponentUpdatedCallback = function() end  -- set when added to an EntityManager
 
     self._IsBeingRemoved = false
     self._IsBeingDestroyed = false
@@ -70,12 +71,12 @@ end
 
 
 function ECSEntity:AddToTable(entityTable)
-
+    -- reference counting
 end
 
 
 function ECSEntity:RemoveFromTable(entityTable)
-
+    -- reference counting
 end
 
 
@@ -175,6 +176,17 @@ function ECSEntity:GetComponentsFromGroup(componentGroup)
 end
 
 
+function ECSEntity:GetComponentList()
+    local componentList = {}
+
+    for componentName, _ in pairs(self.Components) do
+        table.insert(componentList, componentName)
+    end
+
+    return componentList
+end
+
+
 function ECSEntity:_ComponentsAdded(componentsAdded)
     if (self._IsBeingRemoved == false and self._IsBeingDestroyed == false) then
         self.ComponentsAddedCallback(self, componentsAdded)
@@ -185,6 +197,13 @@ end
 function ECSEntity:_ComponentsRemoved(componentsRemoved)
     if (self._IsBeingRemoved == false and self._IsBeingDestroyed == false) then
         self.ComponentsRemovedCallback(self, componentsRemoved)
+    end
+end
+
+
+function ECSEntity:_ComponentUpdated(componentUpdated)
+    if (self._IsBeingRemoved == false and self._IsBeingDestroyed == false) then
+        self.ComponentUpdatedCallback(self, componentUpdated)
     end
 end
 
@@ -222,7 +241,9 @@ function ECSEntity:AddComponent(newComponent)
     local overwritedComponent = self:_AddComponent(newComponent)
 
     if (overwritedComponent == false) then
-        self:_ComponentsAdded({newComponent})
+        self:_ComponentsAdded({newComponent._COMPONENT_NAME})
+    else
+        self:_ComponentUpdated(newComponent._COMPONENT_NAME)
     end
 end
 
@@ -249,7 +270,9 @@ function ECSEntity:AddComponents(...)
         local overwritedComponent = self:_AddComponent(component)
 
         if (overwritedComponent == false) then
-            table.insert(addedComponents, component)
+            table.insert(addedComponents, component._COMPONENT_NAME)
+        else
+            self:_ComponentUpdated(component._COMPONENT_NAME)
         end
     end
 

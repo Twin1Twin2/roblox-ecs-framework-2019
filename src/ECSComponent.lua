@@ -72,4 +72,14 @@ function ECSComponent:Initialize(entity)
 end
 
 
+function ECSComponent:CopyData()
+    return self._COMPONENT_DESCRIPTION:GetComponentData(self)
+end
+
+
+function ECSComponent:GetSyncData()
+    return self._COMPONENT_DESCRIPTION.GetSyncData(self)
+end
+
+
 return ECSComponent

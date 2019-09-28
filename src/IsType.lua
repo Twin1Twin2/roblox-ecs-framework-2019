@@ -64,13 +64,23 @@ IsType.World = function(self)
 end
 
 
-IsType.Engine = function(self)
-    return self._IsEngine == true
+IsType.Engine_Server = function(self)
+    return self._IsEngine_Server == true
 end
 
 
-IsType.EngineConfiguration = function(self)
-    return self._IsEngineConfiguration == true
+IsType.EngineConfiguration_Server = function(self)
+    return self._IsEngineConfiguration_Server == true
+end
+
+
+IsType.Engine_Client = function(self)
+    return self._IsEngine_Client == true
+end
+
+
+IsType.EngineConfiguration_Client = function(self)
+    return self._IsEngineConfiguration_Client == true
 end
 
 

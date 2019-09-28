@@ -8,7 +8,7 @@ local TableCopy = Table.Copy
 local TableContains = Table.Contains
 local TableGetIndex = Table.GetIndex
 
-local Signal = require("Signal")
+local Signal = require(script.Parent.Signal)
 
 
 local EntityTable = {

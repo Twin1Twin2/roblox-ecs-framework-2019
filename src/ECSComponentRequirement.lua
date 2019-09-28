@@ -26,6 +26,7 @@ function ECSComponentRequirement.new()
     self.AllList = {}
     self.OneList = {}
     self.ExcludeList = {}
+    self.FunctionList = {}
 
 
     return self
@@ -36,6 +37,7 @@ function ECSComponentRequirement:Destroy()
     self.AllList = nil
     self.OneList = nil
     self.ExcludeList = nil
+    self.FunctionList = nil
 
     setmetatable(self, nil)
 end
@@ -75,7 +77,10 @@ local function AddNameToListIfNotInOther(instanceName, name, list, listName, oth
     -- make sure it isn't already in the other list
     for otherListName, otherList in pairs(otherLists) do
         if (TableContains(otherList, name) == true) then
-            warn("ComponentRequirement - " .. instanceName .. ": Unable to add \"" .. name .. "\" to list \"" .. listName .. "\"! Already in list \"" .. otherListName .. "\"!")
+            warn("ComponentRequirement - " .. instanceName
+                .. ": Unable to add \"" .. name .. "\" to list \""
+                .. listName .. "\"! Already in list \""
+                .. otherListName .. "\"!")
             return
         end
     end
@@ -112,6 +117,16 @@ end
 function ECSComponentRequirement:EntityBelongs(entity)
     local hasChecked = false
 
+    if (#self.FunctionList > 0) then
+        for _, func in pairs(self.FunctionList) do
+            if (func(entity) == false) then
+                return false
+            end
+        end
+
+        hasChecked = true
+    end
+
     if (#self.ExcludeList > 0) then
         for _, componentName in pairs(self.ExcludeList) do
             if (entity:HasComponent(componentName) == true) then
@@ -145,6 +160,13 @@ end
 
 
 -- Adding/Setting Components
+
+
+function ECSComponentRequirement:WithFunction(func)
+    assert(type(func) == "function", "Arg [1] is not a function!")
+
+    table.insert(self.FunctionList, func)
+end
 
 
 function ECSComponentRequirement:All(...)

@@ -3,25 +3,26 @@
 
 local RunService = game:GetService("RunService")
 
-local World = require(script.Parent.ECSWorld)
+local World = require(script.Parent.World)
 
-local IsType = require(script.Parent.IsType)
-local IsEngineConfiguration = IsType.EngineConfiguration
+local root = script.Parent.Parent.Parent
+local IsType = require(root.IsType)
+local IsEngineConfiguration = IsType.EngineConfiguration_Client
 
 
-local ECSEngine = {
-    ClassName = "ECSEngine";
+local ECSEngine_Client = {
+    ClassName = "ECSEngine_Client";
 }
 
-ECSEngine.__index = ECSEngine
+ECSEngine_Client.__index = ECSEngine_Client
 
-ECSEngine.IsType = IsType.Engine
+ECSEngine_Client.IsType = IsType.Engine_Client
 
 
-function ECSEngine.new(engineConfiguration)
+function ECSEngine_Client.new(engineConfiguration, serverData)
     assert(IsEngineConfiguration(engineConfiguration) == true)
 
-    local self = setmetatable({}, ECSEngine)
+    local self = setmetatable({}, ECSEngine_Client)
 
     local entityBuilder = engineConfiguration.EntityBuilder
 
@@ -31,22 +32,15 @@ function ECSEngine.new(engineConfiguration)
     local noUpdateSystemUpdaterBuilder = engineConfiguration.NoUpdate
 
 
-    local world = World.new()
+    local world = World.new(engineConfiguration.Name, serverData, entityBuilder)
 
     local renderSteppedSystems = renderSteppedSystemUpdaterBuilder:Build(world)
     local steppedSystems = steppedSystemUpdaterBuilder:Build(world)
     local heartbeatSystems = heartbeatSystemUpdaterBuilder:Build(world)
     local noUpdateSystems = noUpdateSystemUpdaterBuilder:Build(world)
 
+
     self.World = world
-
-    self.EntityBuilder = entityBuilder
-    self.World.EntityBuilder = entityBuilder
-
-    -- set stepped values
-    self.World.RenderSteppedDelta = 0
-    self.World.SteppedDelta = 0
-    self.World.HearbeatDelta = 0
 
     self.RenderSteppedSystems = renderSteppedSystems
     self.SteppedSystems = steppedSystems
@@ -78,10 +72,18 @@ end
 
 --- Deconstructor
 --
-function ECSEngine:Destroy()
+function ECSEngine_Client:Destroy()
+    self.OnRenderSteppedConnection:Disconnect()
+    self.OnSteppedConnection:Disconnect()
+    self.OnHeartbeatConnection:Disconnect()
 
     setmetatable(self, nil)
 end
 
 
-return ECSEngine
+function ECSEngine_Client:Ready()
+    self.World:Ready()
+end
+
+
+return ECSEngine_Client

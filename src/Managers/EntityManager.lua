@@ -4,15 +4,17 @@
 local RunService = game:GetService("RunService")
 
 
-local IsType = require(script.Parent.Parent.IsType)
+local root = script.Parent.Parent
+
+local IsType = require(root.IsType)
 local IsEntity = IsType.Entity
 local IsComponentRequirement = IsType.ComponentRequirement
 local IsWorld = IsType.World
 
-local Table = require(script.Parent.Parent.Table)
+local Table = require(root.Table)
 local GetIndex = Table.GetIndex
 
-local Signal = require("Signal")
+local Signal = require(root.Signal)
 
 
 local EntityManager = {
@@ -29,6 +31,7 @@ EntityManager.IsType = IsType.EntityManager
 --
 function EntityManager.new(world)
     assert(IsWorld(world), "Arg [1] is not an ECSWorld!")
+
     local self = setmetatable({}, EntityManager)
 
     self._IsEntityManager = true
@@ -41,6 +44,7 @@ function EntityManager.new(world)
     self.OnEntityRemoved = Signal.new()
     self.OnEntityComponentsAdded = Signal.new()
     self.OnEntityComponentsRemoved = Signal.new()
+    self.OnEntityComponentUpdated = Signal.new()
 
 
     return self
@@ -78,6 +82,15 @@ function EntityManager:EntityComponentsRemoved(entity, removedComponents)
     end
 
     self.OnEntityComponentsRemoved:Fire(entity, removedComponents)
+end
+
+
+function EntityManager:EntityComponentUpdated(entity, updatedComponentName)
+    if (entity._IsBeingRemoved == true) then
+        return
+    end
+
+    self.OnEntityComponentUpdated:Fire(entity, updatedComponentName)
 end
 
 
@@ -188,6 +201,9 @@ function EntityManager:Add(entity)
     end
     entity.ComponentsRemovedCallback = function(changedEntity, removedComponents)
         self:EntityComponentsRemoved(changedEntity, removedComponents)
+    end
+    entity.ComponentUpdatedCallback = function(changedEntity, componentName)
+        self:EntityComponentUpdated(changedEntity, componentName)
     end
 
     -- add entity

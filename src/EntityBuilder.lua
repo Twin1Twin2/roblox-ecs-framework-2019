@@ -266,6 +266,16 @@ function EntityBuilder:Build(instanceData, componentData)
 end
 
 
+function EntityBuilder:BuildComponent(componentName, componentData)
+    assert(type(componentName) == "string", "Arg [1] is not a string!")
+
+    local componentDesc = self:GetComponentDescription(componentName)
+    assert(componentDesc, "Unable to build component with name " .. componentName)
+
+    return componentDesc:Build(componentData)
+end
+
+
 ---
 -- @tparam Instance sceneRootInstance
 -- @treturn ECSEntity[]

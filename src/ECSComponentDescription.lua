@@ -39,6 +39,10 @@ function ECSComponentDescription.new(name)
     self.InitializeComponent = function() end
     self.DestroyComponent = function() end
 
+    self.GetSyncData = function(component)
+        return self:GetComponentData(component)
+    end
+
 
     return self
 end
@@ -75,7 +79,13 @@ function ECSComponentDescription:GetComponentData(component)
     local data = {}
 
     for _, fieldName in pairs(self.Fields) do
-        data[fieldName] = component[fieldName]
+        local componentFieldData = component[fieldName]
+
+        if (type(componentFieldData) == "table") then
+            data[fieldName] = TableCopy(componentFieldData)
+        else
+            data[fieldName] = componentFieldData
+        end
     end
 
     return data
