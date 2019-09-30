@@ -9,29 +9,34 @@ ECSClientFramework.SetupEngineConfiguration = require(script.SetupEngineConfigur
 
 
 local ACCESS_TYPE = Utilities.ACCESS_TYPE
+local ACCESS_TYPE_NONE = ACCESS_TYPE.NONE
 local ACCESS_TYPE_READ_ONLY = ACCESS_TYPE.READ_ONLY
 local ACCESS_TYPE_READ_WRITE = ACCESS_TYPE.READ_WRITE
+
+ECSClientFramework.ACCESS_TYPE = ACCESS_TYPE
+
 
 local function GetSyncAccessToComponent(entity, componentName)
     local syncComponent, component = entity:GetComponents("SyncComponent", componentName)
 
     if (syncComponent == nil or component == nil) then
-        return false, -1
+        return ACCESS_TYPE_NONE
     end
 
     local accessData = syncComponent.AccessData
     local accessType = accessData[componentName]
 
-    return true, (accessType or -1)
+    return accessType or ACCESS_TYPE_NONE
 end
+
+ECSClientFramework.GetSyncAccessToComponent = GetSyncAccessToComponent
 
 
 local function CheckHasAccessType(componentName, accessType)
     return function(entity)
-        local hasSyncAccess, componentAccessType = GetSyncAccessToComponent(entity, componentName)
+        local componentAccessType = GetSyncAccessToComponent(entity, componentName)
 
-        return hasSyncAccess == true
-            and componentAccessType == accessType
+        return componentAccessType == accessType
     end
 end
 
@@ -40,10 +45,9 @@ ECSClientFramework.ReadRequirement = function(componentName)
     assert(type(componentName) == "string", "Arg [1] is not a string!")
 
     return function(entity)
-        local hasSyncAccess, accessType = GetSyncAccessToComponent(entity, componentName)
+        local accessType = GetSyncAccessToComponent(entity, componentName)
 
-        return hasSyncAccess == true
-            and (accessType == ACCESS_TYPE_READ_ONLY
+        return (accessType == ACCESS_TYPE_READ_ONLY
                 or accessType == ACCESS_TYPE_READ_WRITE)
     end
 end

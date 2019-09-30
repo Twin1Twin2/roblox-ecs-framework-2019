@@ -166,6 +166,8 @@ function ECSComponentRequirement:WithFunction(func)
     assert(type(func) == "function", "Arg [1] is not a function!")
 
     table.insert(self.FunctionList, func)
+
+    return self
 end
 
 

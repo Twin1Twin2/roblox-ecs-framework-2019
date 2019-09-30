@@ -9,6 +9,9 @@ local SYNC_EVENT_ENTITY_REMOVE_COMPONENTS = SYNC_EVENTS.ENTITY_REMOVE_COMPONENTS
 local SYNC_EVENT_COMPONENT_UPDATE = SYNC_EVENTS.COMPONENT_UPDATE
 local SYNC_EVENT_PLAYER_READY = SYNC_EVENTS.PLAYER_READY
 
+local ACCESS_TYPE = Utilities.ACCESS_TYPE
+local ACCESS_TYPE_READ_WRITE = ACCESS_TYPE.READ_WRITE
+
 -- local GetEntitySyncDataFromComponentList = Utilities.GetEntitySyncDataFromComponentList
 
 local SyncComponent = require(script.Parent.SyncComponent)
@@ -62,18 +65,45 @@ function SyncManager_Client:Ready()
         end
     end)
 
+    self.OnEntityComponentUpdatedConnection = self.EntityManager.OnEntityComponentUpdated
+        :Connect(function(entity, componentName)
+            if (componentName ~= "ComponentUpdatedComponent" and entity:HasComponent("SyncComponent")) then
+                self:ComponentUpdated(entity, componentName)
+            end
+        end)
+
     self.RemoteEvent:FireServer(SYNC_EVENT_PLAYER_READY)
 end
 
 
-function SyncManager_Client:ComponentUpdated(entity, componentName, componentData)
-    local data = {
+local function CreateComponentUpdatedData(entity, componentName, componentData)
+    return {
         EntityInstance = entity.Instance;
         ComponentName = componentName;
         ComponentData = componentData;
     }
+end
 
-    self.RemoveEvent:FireServer(SYNC_EVENT_COMPONENT_UPDATE, data)
+
+function SyncManager_Client:ComponentUpdated(entity, componentName)
+    local syncComponent = entity:GetComponent("SyncComponent")
+    local accessData = syncComponent.AccessData
+    local componentAccessType = accessData[componentName]
+
+    if (componentAccessType ~= ACCESS_TYPE_READ_WRITE) then
+        return
+    end
+
+    local componentData = entity:GetComponent(componentName)
+        :GetSyncData()
+
+    local componentUpdateData = CreateComponentUpdatedData(
+        entity,
+        componentName,
+        componentData
+    )
+
+    self.RemoteEvent:FireServer(SYNC_EVENT_COMPONENT_UPDATE, componentUpdateData)
 end
 
 

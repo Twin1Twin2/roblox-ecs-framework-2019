@@ -30,6 +30,7 @@ local systems = resources.Systems
 local HumanoidComponent = require(components.HumanoidComponent)
 local OwnedInputComponent = require(components.OwnedInputComponent)
 local TestAccessComponent = require(components.TestAccessComponent)
+local OwnerComponent = require(components.OwnerComponent)
 
 local engineConfiguration = EngineConfiguration_Server.new("ECSExampleEngine")
 
@@ -39,6 +40,7 @@ engineConfiguration.EntityBuilder
     :RegisterComponent(HumanoidComponent)
     :RegisterComponent(OwnedInputComponent)
     :RegisterComponent(TestAccessComponent)
+    :RegisterComponent(OwnerComponent)
 
 engineConfiguration.NoUpdate
     :With(require(serverSystems.RandomWalkSpeedSystem).new())
@@ -69,6 +71,11 @@ Players.PlayerAdded:Connect(function(player)
                     })
                 )
                 :With(
+                    OwnerComponent:Build({
+                        Owner = player;
+                    })
+                )
+                :With(
                     OwnedInputComponent:Build()
                 )
                 :With(
@@ -80,6 +87,7 @@ Players.PlayerAdded:Connect(function(player)
         local ownerAccessType = OwnerAccess.new(player, ACCESS_TYPE.READ_WRITE, ACCESS_TYPE.READ_ONLY)
         SetComponentAccessType(playerEntity, OwnedInputComponent.Name, ownerAccessType)
         SetComponentAccessType(playerEntity, HumanoidComponent.Name, ComponentAccessType.new(ACCESS_TYPE.READ_ONLY))
+        SetComponentAccessType(playerEntity, OwnerComponent.Name, ComponentAccessType.new(ACCESS_TYPE.READ_ONLY))
         SetComponentAccessType(playerEntity, TestAccessComponent.Name, ComponentAccessType.new(ACCESS_TYPE.READ_ONLY))
 
         world:AddEntity(playerEntity)

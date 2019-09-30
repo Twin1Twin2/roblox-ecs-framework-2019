@@ -28,6 +28,7 @@ ECSClientFramework.SetupEngineConfiguration(engineConfiguration)
 engineConfiguration.EntityBuilder
     :RegisterComponent(require(components.HumanoidComponent))
     :RegisterComponent(require(components.OwnedInputComponent))
+    :RegisterComponent(require(components.OwnerComponent))
     :RegisterComponent(require(components.TestAccessComponent))
 
 

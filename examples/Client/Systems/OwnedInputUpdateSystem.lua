@@ -11,6 +11,10 @@ local ReadWriteRequirement = ClientFramework.ReadWriteRequirement
 
 local UserInputService = game:GetService("UserInputService")
 
+local resources = ReplicatedStorage:FindFirstChild("ECSExampleResources")
+local components = resources.Components
+local OwnedInputComponent = require(components.OwnedInputComponent)
+
 
 local OwnedInputUpdateSystem = {
     ClassName = "OwnedInputUpdateSystem";
@@ -58,9 +62,14 @@ end
 function OwnedInputUpdateSystem:UpdateEntity(entity)
     local inputComponent = entity:GetComponent("OwnedInputComponent")
 
-    inputComponent.Input = UserInputService:IsKeyDown(Enum.KeyCode.E)
+    local currentInput = inputComponent.Input
+    local isDown = UserInputService:IsKeyDown(Enum.KeyCode.E)
 
-    -- entity:AddComponent(inputComponent) -- ?
+    if (currentInput ~= isDown) then
+        entity:AddComponent(OwnedInputComponent:Build({
+            Input = isDown;
+        })) -- ?
+    end
 
 end
 

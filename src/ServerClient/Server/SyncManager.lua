@@ -429,7 +429,7 @@ function SyncManager_Server:ComponentUpdated(entity, componentName)
         componentData
     )
 
-    self:FireComponentUpdateData(players, componentUpdateData)
+    self:FireComponentUpdated(players, componentUpdateData)
 end
 
 
@@ -484,7 +484,7 @@ function SyncManager_Server:ComponentUpdatedFromClient(player, data)
     assert(DoesPlayerHaveWriteAccess(player, accessData, componentName),
         "Player " .. player.Name .. " tried to update component "
         .. componentName .. " but does not have write access!")
-
+    warn("Player " .. player.Name .. " - Component " .. componentName .. " Updated!")
     -- resets the component updated value
     local component = self.EntityBuilder:BuildComponent(componentName, componentData)
 
