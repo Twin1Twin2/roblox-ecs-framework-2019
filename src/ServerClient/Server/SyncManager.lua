@@ -23,9 +23,13 @@ local ACCESS_TYPE_READ_ONLY = ACCESS_TYPE.READ_ONLY
 local IsPlayer = Utilities.IsPlayer
 local IsReadAccessType = Utilities.IsReadAccessType
 
--- local root = script:FindFirstAncestor("ServerClient").Parent
+local serverClientRoot = script:FindFirstAncestor("ServerClient")
+local ComponentUpdateSyncManager = require(serverClientRoot.ComponentUpdateSyncManager)
+
+local root = serverClientRoot.Parent
 -- local Table = require(root.Table)
 -- local TableCopy = Table.Copy
+local Signal = require(root.Signal)
 
 
 local SyncComponentSystem = {
@@ -69,8 +73,13 @@ function SyncManager_Server.new(world, serverData, entityBuilder)
     self.SyncComponentSystem = SyncComponentSystem.new()
     world:AddSystem(self.SyncComponentSystem)
 
+    self.ComponentUpdateSyncManager = ComponentUpdateSyncManager.new(self, world)
+
     self.PlayersReady = {}
     self.RegisteredComponents = {}
+
+    self.OnPlayerReady = Signal.new()
+    self.OnPlayerUnready = Signal.new()
 
 
     self.OnServerEventConnection = remoteEvent.OnServerEvent:Connect(function(player, eventType, data)
@@ -108,8 +117,8 @@ function SyncManager_Server.new(world, serverData, entityBuilder)
         :Connect(function(entity, componentName)
             if (componentName == "SyncComponent") then
                 self:EntitySyncComponentChanged(entity)
-            elseif (componentName ~= "ComponentUpdatedComponent") then
-                self:ComponentUpdated(entity, componentName)
+            else
+                self.ComponentUpdateSyncManager:EntityComponentUpdated(entity, componentName)
             end
         end)
 
@@ -120,6 +129,11 @@ end
 
 function SyncManager_Server:Destroy()
     setmetatable(self, nil)
+end
+
+
+function SyncManager_Server:Update()
+    self.ComponentUpdateSyncManager:Update()
 end
 
 
@@ -176,30 +190,34 @@ end
 
 local function GetSyncedComponentsDataForPlayerFromList(entity, player, accessData, componentsList)
     local componentsSyncData = {}
+    local isEmpty = true
 
     for _, componentName in pairs(componentsList) do
         if (componentName == "SyncComponent") then
             componentsSyncData["SyncComponent"] = {
                 AccessData = GetClientAccessData(accessData, player)
             }
-        else
+            isEmpty = false
+        elseif (componentName ~= "ComponentsUpdatedComponent") then
             local componentAccessData = accessData[componentName]
 
             if (IsReadAccessType(componentAccessData:GetForPlayer(player))) then
                 componentsSyncData[componentName] = entity:GetComponent(componentName)
                     :GetSyncData()
+                isEmpty = false
             end
         end
     end
 
-    return componentsSyncData
+    return componentsSyncData, isEmpty
 end
 
 
 local function CreateEntityAddedDataForPlayer(entity, player, accessData)
+    local componentsData, _ = GetSyncedComponentsDataForPlayer(entity, player, accessData)
     return {
         EntityInstance = entity.Instance;
-        ComponentsData = GetSyncedComponentsDataForPlayer(entity, player, accessData);
+        ComponentsData = componentsData;
     }
 end
 
@@ -246,12 +264,28 @@ end
 
 
 local function CreateEntityComponentsAddedDataForPlayer(entity, accessData, componentsAdded, player)
-    local addedComponentsData = GetSyncedComponentsDataForPlayerFromList(entity, player, accessData, componentsAdded)
+    local addedComponentsData, isEmpty
+        = GetSyncedComponentsDataForPlayerFromList(entity, player, accessData, componentsAdded)
 
     return {
         EntityInstance = entity.Instance;
         AddedComponentsData = addedComponentsData;
-    }
+    }, isEmpty
+end
+
+
+local function FilterComponentsUpdateComponentFromComponentList(componentList)
+    local newComponentList = {}
+    local isEmpty = true
+
+    for _, componentName in pairs(componentList) do
+        if (componentName ~= "ComponentsUpdatedComponent") then
+            table.insert(newComponentList, componentName)
+            isEmpty = false
+        end
+    end
+
+    return newComponentList, isEmpty
 end
 
 
@@ -261,18 +295,25 @@ end
 
 
 function SyncManager_Server:EntityComponentsAdded(entity, componentsAdded)
+    local newComponentsAdded, isEmpty = FilterComponentsUpdateComponentFromComponentList(componentsAdded)
+    if (isEmpty == true) then
+        return
+    end
+
     local syncComponent = entity:GetComponent("SyncComponent")
     local accessData = syncComponent.AccessData
 
-    for _, player in pairs(Players:GetComponents()) do
-        local componentsAddedData = CreateEntityComponentsAddedDataForPlayer(
+    for _, player in pairs(Players:GetPlayers()) do
+        local componentsAddedData, isPlayerComponentsAddedEmpty = CreateEntityComponentsAddedDataForPlayer(
             entity,
             accessData,
-            componentsAdded,
+            newComponentsAdded,
             player
         )
 
-        self:FireEntityComponentsAdded(player, componentsAddedData)
+        if (isPlayerComponentsAddedEmpty == false) then
+            self:FireEntityComponentsAdded(player, componentsAddedData)
+        end
     end
 end
 
@@ -291,7 +332,12 @@ end
 
 
 function SyncManager_Server:EntityComponentsRemoved(entity, removedComponents)
-    local componentsRemovedData = CreateEntityComponentsRemovedData(entity, removedComponents)
+    local newRemovedComponents, isEmpty = FilterComponentsUpdateComponentFromComponentList(removedComponents)
+    if (isEmpty == true) then
+        return
+    end
+
+    local componentsRemovedData = CreateEntityComponentsRemovedData(entity, newRemovedComponents)
 
     self:FireEntityComponentsRemoved(Players:GetPlayers(), componentsRemovedData)
 end
@@ -458,6 +504,8 @@ function SyncManager_Server:PlayerAdded(player)
 
         self:FireEntityAdded(player, entityAddedData)
     end
+
+    self.OnPlayerReady:Fire()
 end
 
 
@@ -469,11 +517,15 @@ end
 
 
 function SyncManager_Server:ComponentUpdatedFromClient(player, data)
+    -- validate data with t
+
     local entityInstance = data.EntityInstance
     local componentName = data.ComponentName
     local componentData = data.ComponentData
 
     local entity = self.EntityManager:GetEntityFromInstance(entityInstance)
+    assert(entity)
+
     local syncComponent = entity:GetComponent("SyncComponent")
 
     assert(syncComponent, "Player tried to update an entity without a sync component!")
@@ -492,8 +544,8 @@ function SyncManager_Server:ComponentUpdatedFromClient(player, data)
 end
 
 
-function SyncManager_Server:UpdateComponent(entity, componentName)
-    -- force an update for the specified component
+function SyncManager_Server:ForceSyncComponent(entity, componentName)
+    self.ComponentUpdateSyncManager:ForceUpdateComponent(entity, componentName)
 end
 
 

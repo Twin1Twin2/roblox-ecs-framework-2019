@@ -16,6 +16,9 @@ local ACCESS_TYPE_READ_WRITE = ACCESS_TYPE.READ_WRITE
 
 local SyncComponent = require(script.Parent.SyncComponent)
 
+local serverClientRoot = script:FindFirstAncestor("ServerClient")
+local ComponentUpdateSyncManager = require(serverClientRoot.ComponentUpdateSyncManager)
+
 
 local SyncManager_Client = {
     ClassName = "SyncManager_Client";
@@ -31,6 +34,8 @@ function SyncManager_Client.new(world, remoteEvent, entityBuilder)
     self.EntityManager = world.EntityManager
     self.SystemManager = world.SystemManager
     self.EntityBuilder = entityBuilder
+
+    self.ComponentUpdateSyncManager = ComponentUpdateSyncManager.new(self, world)
 
     self._MAX_ENTITY_WAIT_TIME = 60
 
@@ -65,14 +70,29 @@ function SyncManager_Client:Ready()
         end
     end)
 
+    -- self.OnEntityComponentUpdatedConnection = self.EntityManager.OnEntityComponentUpdated
+    --     :Connect(function(entity, componentName)
+    --         if (componentName ~= "ComponentUpdatedComponent" and entity:HasComponent("SyncComponent")) then
+    --             self:ComponentUpdated(entity, componentName)
+    --         end
+    --     end)
+
     self.OnEntityComponentUpdatedConnection = self.EntityManager.OnEntityComponentUpdated
         :Connect(function(entity, componentName)
-            if (componentName ~= "ComponentUpdatedComponent" and entity:HasComponent("SyncComponent")) then
-                self:ComponentUpdated(entity, componentName)
-            end
+            self.ComponentUpdateSyncManager:EntityComponentUpdated(entity, componentName)
         end)
 
     self.RemoteEvent:FireServer(SYNC_EVENT_PLAYER_READY)
+end
+
+
+function SyncManager_Client:Destroy()
+    setmetatable(self, nil)
+end
+
+
+function SyncManager_Client:Update()
+    self.ComponentUpdateSyncManager:Update()
 end
 
 
@@ -188,6 +208,11 @@ function SyncManager_Client:ComponentUpdatedFromServer(data)
     if (componentName == "SyncComponent") then  -- should this use the componentupdate callback instead?
         self.SystemManager:EntityChanged(entity)
     end
+end
+
+
+function SyncManager_Client:ForceSyncComponent(entity, componentName)
+    self.ComponentUpdateSyncManager:ForceUpdateComponent(entity, componentName)
 end
 
 

@@ -43,6 +43,11 @@ function ECSWorld_Client.new(name, serverData, entityBuilder)
 end
 
 
+function ECSWorld_Client:Update()
+    self.SyncManager:Update()
+end
+
+
 function ECSWorld_Client:Ready()
     self.SyncManager:Ready()
 end

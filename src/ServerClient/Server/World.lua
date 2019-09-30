@@ -1,9 +1,6 @@
 
-local Players = game:GetService("Players")
-
 local root = script.Parent.Parent.Parent
 local ECSWorld = require(root.ECSWorld)
-local Signal = require(root.Signal)
 
 local SyncManager = require(script.Parent.SyncManager)
 
@@ -36,6 +33,11 @@ function ECSWorld_Server.new(name, entityBuilder)
 
 
     return self
+end
+
+
+function ECSWorld_Server:Update()
+    self.SyncManager:Update()
 end
 
 

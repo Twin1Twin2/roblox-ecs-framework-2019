@@ -63,6 +63,8 @@ function ECSEngine_Client.new(engineConfiguration, serverData)
         world.HeartbeatDelta = stepped
 
         heartbeatSystems:Update()
+
+        world:Update()
     end)
 
 
