@@ -134,15 +134,10 @@ function SyncManager_Client:EntityAddedFromServer(data)
     local componentsData = data.ComponentsData
     local syncComponentData = componentsData["SyncComponent"]
 
-    warn("ComponentsData:")
-    for i, v in pairs(componentsData) do print(i, v) end
-
     local entity = self.EntityBuilder:Build(entityInstance, componentsData)
 
     entity:Add()
-        :With(
-            SyncComponent:Build(syncComponentData)
-        )
+        :With(SyncComponent:Build(syncComponentData))
         :Finish()
 
     self.EntityManager:Add(entity)

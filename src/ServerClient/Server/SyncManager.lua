@@ -175,8 +175,10 @@ local function GetSyncedComponentsDataForPlayer(entity, player, accessData)
 
     for componentName, componentAccessData in pairs(accessData) do
         if (IsReadAccessType(componentAccessData:GetForPlayer(player))) then
-            componentsSyncData[componentName] = entity:GetComponent(componentName)
-                :GetSyncData()
+            local component = entity:GetComponent(componentName)
+            if (component ~= nil) then
+                componentsSyncData[componentName] = component:GetSyncData()
+            end
         end
     end
 
@@ -505,7 +507,7 @@ function SyncManager_Server:PlayerAdded(player)
         self:FireEntityAdded(player, entityAddedData)
     end
 
-    self.OnPlayerReady:Fire()
+    self.OnPlayerReady:Fire(player)
 end
 
 

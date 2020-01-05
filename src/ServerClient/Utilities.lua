@@ -18,6 +18,7 @@ local ACCESS_TYPE = {
     NONE = 0;
     READ_ONLY = 1;
     READ_WRITE = 2;
+    SERVER_ONLY = 3;
 }
 
 Utilities.ACCESS_TYPE = ACCESS_TYPE

@@ -22,5 +22,7 @@ ECSFramework.World = require(script.ECSWorld)
 ECSFramework.Server = require(script.ServerClient.Server)
 ECSFramework.Client = require(script.ServerClient.Client)
 
+ECSFramework.GetOrCreateEntity = require(script.GetOrCreateEntity)
+
 
 return ECSFramework

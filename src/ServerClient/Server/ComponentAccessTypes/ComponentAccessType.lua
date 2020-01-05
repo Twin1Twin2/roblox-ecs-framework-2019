@@ -18,6 +18,7 @@ function ComponentAccessType.new(accessType)
 
     self._IsComponentAccessType = true
 
+    self.IsServerOnly = false
     self.DefaultAccessType = accessType
 
 

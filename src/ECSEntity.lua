@@ -326,6 +326,15 @@ function ECSEntity:RemoveComponents(...)
 end
 
 
+function ECSEntity:FireComponentUpdated(componentName)
+    assert(type(componentName) == "string", "Arg [1] is not a string!")
+    assert(self:HasComponent(componentName),
+        "Arg [1] \"" .. componentName .. "\" is not a component in this Entity!")
+
+    self:_ComponentUpdated(componentName)
+end
+
+
 -- Builders
 
 local EntityAddComponentsBuilder = {

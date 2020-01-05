@@ -4,6 +4,7 @@
 local IsType = require(script.Parent.IsType)
 local IsComponentDescription = IsType.ComponentDescription
 local IsComponentGroup = IsType.ComponentGroup
+local IsComponentRequirement = IsType.ComponentRequirement
 
 local Table = require(script.Parent.Table)
 local TableContains = Table.Contains
@@ -15,7 +16,7 @@ local ECSComponentRequirement = {
 
 ECSComponentRequirement.__index = ECSComponentRequirement
 
-ECSComponentRequirement.IsType = IsType.ComponentRequirement
+ECSComponentRequirement.IsType = IsComponentRequirement
 
 
 function ECSComponentRequirement.new()
@@ -51,6 +52,21 @@ function ECSComponentRequirement:Clone(name)
 
 
     return newObject
+end
+
+
+function ECSComponentRequirement:Merge(componentRequirement)
+    assert(IsComponentRequirement(componentRequirement), "Arg [1] is not an ECSComponentRequirement!")
+
+    self:AllFromList(componentRequirement.AllList)
+        :OneFromList(componentRequirement.OneList)
+        :ExcludeFromList(componentRequirement.ExcludeList)
+
+    for _, func in pairs(componentRequirement.FunctionList) do
+        self:WithFunction(func)
+    end
+
+    return self
 end
 
 

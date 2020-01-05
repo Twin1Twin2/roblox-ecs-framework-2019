@@ -17,6 +17,10 @@ local GetOrCreateEntity = require(root.GetOrCreateEntity)
 
 local ECSServerFramework = {}
 
+local ACCESS_TYPE = Utilities.ACCESS_TYPE
+local ACCESS_TYPE_NONE = ACCESS_TYPE.NONE
+local ACCESS_TYPE_SERVER_ONLY = ACCESS_TYPE.SERVER_ONLY
+
 ECSServerFramework.ACCESS_TYPE = ACCESS_TYPE
 
 ECSServerFramework.Engine = require(script.Engine)
@@ -42,6 +46,37 @@ local function SetComponentAccessType(entity, componentName, componentAccessType
 end
 
 ECSServerFramework.SetComponentAccessType = SetComponentAccessType
+
+
+local function GetSyncAccessToComponent(entity, componentName)
+    local syncComponent, component = entity:GetComponents("SyncComponent", componentName)
+
+    if (syncComponent == nil or component == nil) then
+        return nil
+    end
+
+    local accessData = syncComponent.AccessData
+    local componentAccessType = accessData[componentName]
+
+    if (componentAccessType == nil) then
+        return nil
+    end
+
+    return componentAccessType
+end
+
+
+local function ServerOnlyRequirement(componentName)
+    assert(type(componentName) == "string", "Arg [1] is not a string!")
+
+    return function(entity)
+        local componentAccessType = GetSyncAccessToComponent(entity, componentName)
+
+        return componentAccessType ~= nil and componentAccessType.IsServerOnly == true
+    end
+end
+
+ECSServerFramework.ServerOnlyRequirement = ServerOnlyRequirement
 
 
 local function CreateSyncedEntity(entity)
